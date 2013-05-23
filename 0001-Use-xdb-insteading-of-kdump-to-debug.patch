@@ -1,0 +1,48 @@
+From 19e2242b50ed2cf831bb386f08d18f8603d0bb46 Mon Sep 17 00:00:00 2001
+From: Haifeng Li <hfli@marvell.com>
+Date: Fri, 10 May 2013 17:07:44 +0800
+Subject: [PATCH] Use xdb insteading of kdump to debug
+
+---
+ kernel/kexec.c |   10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/kernel/kexec.c b/kernel/kexec.c
+index 4e2e472..7e8b8d6 100644
+--- a/kernel/kexec.c
++++ b/kernel/kexec.c
+@@ -1089,14 +1089,16 @@ void crash_kexec(struct pt_regs *regs)
+ 	 * sufficient.  But since I reuse the memory...
+ 	 */
+ 	if (mutex_trylock(&kexec_mutex)) {
+-		if (kexec_crash_image) {
++//		if (kexec_crash_image) {
+ 			struct pt_regs fixed_regs;
+ 
+ 			crash_setup_regs(&fixed_regs, regs);
+ 			crash_save_vmcoreinfo();
+ 			machine_crash_shutdown(&fixed_regs);
+-			machine_kexec(kexec_crash_image);
+-		}
++			flush_cache_all();
++			printk("%s:Kexec Over\n",__func__);
++//			machine_kexec(kexec_crash_image);
++//		}
+ 		mutex_unlock(&kexec_mutex);
+ 	}
+ }
+@@ -1179,10 +1181,10 @@ static u32 *append_elf_note(u32 *buf, char *name, unsigned type, void *data,
+ 			    size_t data_len)
+ {
+ 	struct elf_note note;
+-
+ 	note.n_namesz = strlen(name) + 1;
+ 	note.n_descsz = data_len;
+ 	note.n_type   = type;
++	printk("note.name_sz:%d\n",note.n_namesz);
+ 	memcpy(buf, &note, sizeof(note));
+ 	buf += (sizeof(note) + 3)/4;
+ 	memcpy(buf, name, note.n_namesz);
+-- 
+1.7.9.5
+
